@@ -292,13 +292,13 @@ def main(args):
     model.to(device)
 
     model_ema = None
-    '''if args.model_ema:
+    if args.model_ema:
         # Important to create EMA model after cuda(), DP wrapper, and AMP but before SyncBN and DDP wrapper
         model_ema = ModelEma(
             model,
             decay=args.model_ema_decay,
             device='cpu' if args.model_ema_force_cpu else '',
-            resume='')'''
+            resume='')
 
     model_without_ddp = model
     if args.distributed:
@@ -312,20 +312,6 @@ def main(args):
     print(args.opt)
 
     optimizer = create_optimizer(args, model_without_ddp)
-
-    # ------------ Different lr for Attention (qkv) ------------
-    '''all_parameters = model_without_ddp.parameters()
-    weight_parameters = []
-    for pname, p in model_without_ddp.named_parameters():
-        if 'qkv.weight' in pname:
-            weight_parameters.append(p)
-    weight_parameters_id = list(map(id, weight_parameters))
-    other_parameters = list(filter(lambda p: id(p) not in weight_parameters_id, all_parameters))
-
-    optimizer = torch.optim.Adam(
-            [{'params' : other_parameters},
-            {'params' : weight_parameters, 'lr' : args.lr }],
-            lr=args.lr, weight_decay=args.weight_decay)'''
     
     loss_scaler = NativeScaler()
 
@@ -341,27 +327,20 @@ def main(args):
     else:
         criterion = torch.nn.CrossEntropyLoss()
 
-    # criterion_dmd = torch.nn.MSELoss()
     criterion = torch.nn.CrossEntropyLoss()
 
     teacher_model = None
     if args.distillation_type != 'none':
-        # assert args.teacher_path, 'need to specify teacher-path when using distillation'
-        # print(f"Creating teacher model: {args.teacher_model}")
+        assert args.teacher_path, 'need to specify teacher-path when using distillation'
+        print(f"Creating teacher model: {args.teacher_model}")
         teacher_model = create_model(
             args.teacher_model,
             pretrained=True,
             num_classes=args.nb_classes,
         )
-        '''if args.teacher_path.startswith('https'):
-            checkpoint = torch.hub.load_state_dict_from_url(
-                args.teacher_path, map_location='cpu', check_hash=True)
-        else:
-            checkpoint = torch.load(args.teacher_path, map_location='cpu')'''
-        '''teacher_model.load_state_dict(checkpoint['model'])'''
+
         teacher_model.to(device)
         teacher_model.eval()
-    # print(teacher_model)
 
     # wrap the criterion in our custom DistillationLoss, which
     # just dispatches to the original criterion if args.distillation_type is 'none'
