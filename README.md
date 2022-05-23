@@ -17,3 +17,7 @@
   ### Eval Q-ViT Deit-S 4bits: (80.9% Top-1 Acc.):
     
     > python -m torch.distributed.launch --master_port=1234 --nproc_per_node=1 --use_env main.py --model fourbits_deit_small_patch16_224 --weight-decay 0. --batch-size 64  --data-path /dataset/ImageNet --output_dir ./eval --resume ./best_checkpoint_4bit.pth --eval
+    
+## Model:
+
+Checkpoint files are attached on https://drive.google.com/drive/folders/1sZztcVdgdXqqg4IueHUbXZRXRtQSUx7m?usp=sharing
